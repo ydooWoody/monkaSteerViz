@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+  <!-- Thanks to ThaumicTom for the padviz site, get the typical viz here: https://thaumictom.github.io/webpad/index.html -->
+  <!-- And I guess some thx to Waltzed for helping me learn this disaster of a language-->
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <style>
+      :root {
+        /* Color coding of the background (Probably leave it off)*/
+        --allbg: #ffffff00;
+        --text: #000000;
+
+        /* Deadzone (ls = Left stick; tr = Triggers) (Not really needed, tends to get the wheel stuck)*/
+        --dz_ls: 0.015;
+        --dz_tr: 0;
+        /* Button changes can be changed on ~line 133 if youre weird */
+
+        /* Mess with the steering alignment, can be goofy (default is 48% and 37%) */
+        --monkaSteerX: 48%;
+        --monkaSteerY: 37%;
+
+        /* Change the shake intensity (default is 4) */
+        --monkaShake: 4;
+
+        /* Mirror the frog's steering (-1: You steer right he steers right | 1: You steer right and he steers left; typically better) */
+        --mirror: 1;
+
+        /*Acceleration shake frequency. The lower the number the smoother the shaking but worse on cpu. (100 is default) */
+        --update: 100;
+
+        /*Controller poll frequency. Raising this number could improve proformance. (16 is default)*/
+        --poll: 16;
+      }
+
+      html,
+      body {
+        overflow: hidden;
+        margin: 0;
+        height: 100%;
+        background-color: var(--allbg);
+      }
+
+      #main {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .parent {
+        width: 557px;
+        height: 621px;
+        background-image: url("http://ydoowoody.com/wp-content/uploads/2022/02/monka_clean_long.png");
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: auto;
+        position: absolute;
+      }
+
+      .overlay {
+        position: relative;
+      }
+
+      #wheel {
+        width: 500px;
+        height: 660px;
+        background-image: url("http://ydoowoody.com/wp-content/uploads/2022/02/wheel_centered.png");
+        background-repeat: no-repeat;
+        transform-origin: var(--monkaSteerX) var(--monkaSteerY);
+      }
+
+      #wheel_H {
+        width: 500px;
+        height: 660px;
+        background-image: url("http://ydoowoody.com/wp-content/uploads/2022/02/wheel_honk.png");
+        background-repeat: no-repeat;
+        transform-origin: var(--monkaSteerX) var(--monkaSteerY);
+        display: none;
+      }
+
+      #eyes {
+        width: 557px;
+        height: 621px;
+        background-image: url("http://ydoowoody.com/wp-content/uploads/2022/02/eyes_long.png");
+        background-repeat: no-repeat;
+        display: none;
+      }
+
+      #pepe {
+        width: 200px;
+        height: 250px;
+      }
+
+      #notif {
+        font-size: 2em;
+        color: var(--text);
+        font-family: Arial, Helvetica, sans-serif;
+        text-align: center;
+      }
+
+      #text {
+        font-size: 2em;
+        color: var(--text);
+        font-family: Arial, Helvetica, sans-serif;
+        text-align: right;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="main">
+      <div class="parent">
+        <div id="pepe"></div>
+
+        <div id="notif" style="display: none">
+          Press any button<br />
+          on your pad.
+        </div>
+        <div class="overlay">
+          <div id="text" style="display: none">HONK!</div>
+        </div>
+        <div class="overlay">
+          <div id="wheel"></div>
+          <div id="wheel_H"></div>
+        </div>
+      </div>
+
+      <div class="overlay">
+        <div id="eyes"></div>
+      </div>
+    </div>
+
+    <script>
+      var ls, tr, gp, time;
+      var loopcount = 1;
+
+      //Keybindings (Change the numbers to change the button to activate whatever thing)
+      var keys = {
+        //Shaking
+        accel: 2,
+        accel2: 7,
+        //Eyes
+        brake: 0,
+        brake2: 6,
+        //Horn
+        horn: 10,
+      };
+
+      //Settings vars
+      var dz_ls = getComputedStyle(document.documentElement).getPropertyValue("--dz_ls");
+      var dz_tr = getComputedStyle(document.documentElement).getPropertyValue("--dz_tr");
+      var shake = getComputedStyle(document.documentElement).getPropertyValue("--monkaShake");
+      var mirror = getComputedStyle(document.documentElement).getPropertyValue("--mirror");
+      var update = getComputedStyle(document.documentElement).getPropertyValue("--update");
+      var poll = getComputedStyle(document.documentElement).getPropertyValue("--poll");
+
+      // If pad is connected, hide the notif and get into the loop
+      window.addEventListener("gamepadconnected", (event) => {
+        document.getElementById("notif").style.display = "none";
+        setInterval(loop, poll);
+      });
+      // If pad disconnected, hide the pad and show the notification as a block
+      window.addEventListener("gamepaddisconnected", (event) => {
+        clearInterval(loop);
+        document.getElementById("notif").style.display = "block";
+      });
+
+      function loop() {
+        gp = navigator.getGamepads()[0];
+        //Poll the controller and get actions
+        if (time != gp.timestamp) {
+          //WHEEL ROTATION
+          // 0 = Left Stick
+          if (gp.axes[0] > dz_ls || gp.axes[0] < -dz_ls) {
+            var value = gp.axes[0].toFixed(2);
+            document.getElementById("wheel").style.transform = "rotate(" + mirror * (value - dz_tr) * 60 + "deg)";
+            //console.log("Steering: " + value);
+          }
+
+          //EYES
+          // 6 = Brake trigger (LT) and 0 = Brake Button (A)
+          if (gp.buttons[keys["brake2"]].value > dz_tr || gp.buttons[keys["brake"]].value == 1) {
+            document.getElementById("eyes").style.display = "block";
+            //console.log("Braking");
+          } else {
+            document.getElementById("eyes").style.display = "none";
+          }
+
+          //SHAKING
+          // 7 = Accel trigger (RT) and 2 = Accel Button (X)
+          setInterval(function () {
+            if (gp.buttons[keys["accel2"]].value > dz_tr || gp.buttons[keys["accel"]].value == 1) {
+              loopcount++;
+              var count = loopcount % 16;
+              //console.log(count);
+              if (count == 0) {
+                document.getElementById("main").style.transform = "rotate(" + shake + "deg)";
+              }
+              if (count == 8) {
+                document.getElementById("main").style.transform = "rotate(" + -1 * shake + "deg)";
+              }
+              if (count == 16) {
+                document.getElementById("main").style.transform = "rotate(" + shake + "deg)";
+              }
+              //console.log("Accelerating");
+            } else {
+              //Rotate it back on release
+              document.getElementById("main").style.transform = "rotate(0deg)";
+            }
+          }, update);
+
+          //HORN
+          // 10 = Horn (L3)
+          if (gp.buttons[keys["horn"]].value == 1) {
+            document.getElementById("text").style.display = "block";
+            document.getElementById("wheel").style.display = "none";
+            document.getElementById("wheel_H").style.transform = "rotate(" + mirror * (gp.axes[0] - dz_tr) * 60 + "deg)";
+            document.getElementById("wheel_H").style.display = "block";
+          } else {
+            document.getElementById("text").style.display = "none";
+            document.getElementById("wheel").style.display = "block";
+            document.getElementById("wheel_H").style.display = "none";
+          }
+        }
+        time = gp.timestamp;
+      }
+    </script>
+  </body>
+</html>
