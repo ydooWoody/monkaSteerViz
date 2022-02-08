@@ -8,6 +8,8 @@ Using OBS/SLOBS
 2. Under settings/properties for the source change the height/width to 1000/1000.
 3. (Optional, but nice) Use custom framerate and set to 60fps
 
+(By default the background is transparent because idk why it wouldnt be, but that (like most things), is labeled in the html file for changing.)
+
 ## How to use
 
 All settings can be changed simply in the html file, just modify according to the instructions there. Default button layout is: 
