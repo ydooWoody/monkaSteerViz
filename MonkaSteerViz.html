@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <!-- Thanks to ThaumicTom for the padviz site, get the typical viz here: https://thaumictom.github.io/webpad/index.html -->
   <!-- And I guess some thx to Waltzed for helping me learn this disaster of a language-->
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-
+    <meta charset="utf-8" />
+    <title>monkaSteerViz</title>
     <style>
       :root {
         /* Color coding of the background (Probably leave it off)*/
@@ -26,8 +26,8 @@
         /* Mirror the frog's steering (-1: You steer right he steers right | 1: You steer right and he steers left; typically better) */
         --mirror: 1;
 
-        /*Acceleration shake frequency. The lower the number the smoother the shaking but worse on cpu. (100 is default) */
-        --update: 100;
+        /*Acceleration shake frequency. (Probably dont mess with this unless last resort) (10 is default) */
+        --update: 10;
 
         /*Controller poll frequency. Raising this number could improve proformance. (16 is default)*/
         --poll: 16;
@@ -189,9 +189,13 @@
 
           //SHAKING
           // 7 = Accel trigger (RT) and 2 = Accel Button (X)
-          setInterval(function () {
+          var refreshIntervalId = setInterval(function () {
             if (gp.buttons[keys["accel2"]].value > dz_tr || gp.buttons[keys["accel"]].value == 1) {
-              loopcount++;
+              if (loopcount >= 17) {
+                loopcount = 1;
+              } else {
+                loopcount++;
+              }
               var count = loopcount % 16;
               //console.log(count);
               if (count == 0) {
@@ -207,15 +211,17 @@
             } else {
               //Rotate it back on release
               document.getElementById("main").style.transform = "rotate(0deg)";
+              clearInterval(refreshIntervalId);
             }
           }, update);
 
           //HORN
           // 10 = Horn (L3)
           if (gp.buttons[keys["horn"]].value == 1) {
+            var value2 = gp.axes[0].toFixed(2);
             document.getElementById("text").style.display = "block";
             document.getElementById("wheel").style.display = "none";
-            document.getElementById("wheel_H").style.transform = "rotate(" + mirror * (gp.axes[0] - dz_tr) * 60 + "deg)";
+            document.getElementById("wheel_H").style.transform = "rotate(" + mirror * (value2 - dz_tr) * 60 + "deg)";
             document.getElementById("wheel_H").style.display = "block";
           } else {
             document.getElementById("text").style.display = "none";
