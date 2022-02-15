@@ -7,6 +7,7 @@ Using OBS/SLOBS
 1. Add the html file as a browser source.
 2. Under settings/properties for the source change the height/width to 1000/1000.
 3. (Optional, but nice) Use custom framerate and set to 60fps
+
 ** (OBS seems to have a browser source lag issue on their end(?), If it gets too noticable resetting the source will fix the issue. No idea if slobs has the same issue, looking into it.) **
 
 (By default the background is transparent because idk why it wouldnt be, but that (like most things), is labeled in the html file for changing.)
